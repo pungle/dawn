@@ -1,9 +1,9 @@
 # dawn
 
 ## Abstract
-dwan一个轻量级HTTP框架，基于原生http框架进行了简单的封装，目前它能实现了URL匹配（精确匹配「=」，前缀匹配「～」和正则表达式匹配「\^」），另外实现了Session模块和Logging模块。
+dawn一个轻量级HTTP框架，基于原生http框架进行了简单的封装，目前它能实现了URL匹配（精确匹配「=」，前缀匹配「～」和正则表达式匹配「\^」），另外实现了Session模块和Logging模块。
 ## Usage
-安装dwan只需要使用`go get`然后使用`import`把所需要的包导入到代码中即可使用:
+安装dawn只需要使用`go get`然后使用`import`把所需要的包导入到代码中即可使用:
 
 	import (
 		"github.com/pungle/dawn/web"
@@ -33,7 +33,7 @@ dwan一个轻量级HTTP框架，基于原生http框架进行了简单的封装�
 		server.AddHandler("/", TestIndex)
 		server.Start()
 	}
-dwan提供了三种URI响应方式「固定URI映射(mapping)，前缀优先(prefix)和模板匹配(match)」，其优先级为：`mapping > prefix > match`，如果使用了`match`方法响应，你可以通过`ctx.GetVar`方法得到之前你在URI定义时所写的变量名字，如：`{id: [0-9]+}`将可以通过`ctx.GetVar("id")`得到相应的内容，匹配方式由冒号后的正则表达式所决定。
+dawn提供了三种URI响应方式「固定URI映射(mapping)，前缀优先(prefix)和模板匹配(match)」，其优先级为：`mapping > prefix > match`，如果使用了`match`方法响应，你可以通过`ctx.GetVar`方法得到之前你在URI定义时所写的变量名字，如：`{id: [0-9]+}`将可以通过`ctx.GetVar("id")`得到相应的内容，匹配方式由冒号后的正则表达式所决定。
 
 	package main
 
@@ -68,7 +68,7 @@ dwan提供了三种URI响应方式「固定URI映射(mapping)，前缀优先(pre
 		server.Start()
 	}
 
-Ｄawn还提供了session的支持但这不是必选项，用户可以根据需要来加入session。session的配置需要通过构造一个`web.SessionContext`对象来创建，`web.SessionContext`包涵了session的相关配置信息。其中`driver`参数可以使用我们提供的`web.NewRedisSessionDriver`，如果你需要使用别的存储方式你也可以自己实现一个｀driver｀，只要符合以下接口即可：
+dawn还提供了session的支持但这不是必选项，用户可以根据需要来加入session。session的配置需要通过构造一个`web.SessionContext`对象来创建，`web.SessionContext`包涵了session的相关配置信息。其中`driver`参数可以使用我们提供的`web.NewRedisSessionDriver`，如果你需要使用别的存储方式你也可以自己实现一个｀driver｀，只要符合以下接口即可：
 
 	type SessionDriver interface {
 		Get(string) (interface{}, error)
