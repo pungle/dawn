@@ -6,6 +6,8 @@ import (
 	"github.com/pungle/dawn/logging"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 )
 
 var (
@@ -109,7 +111,14 @@ logTime:
 	self.writeLog(loggedResp, req)
 }
 
-func (self *HttpServer) Start() error {
+func (self *HttpServer) ListenAndServe() {
+	go self.listen()
+	c := make(chan os.Signal)
+	signal.Notify(c, syscall.SIGINT, syscall.SIGHUP, syscall.SIGTERM, syscall.SIGTSTP, syscall.SIGQUIT)
+	<-c
+}
+
+func (self *HttpServer) listen() {
 	logging.Notify("Listening %s", self.config.addr)
 	logging.Notify("Https: %v", self.config.tls)
 	config := self.config
@@ -119,11 +128,9 @@ func (self *HttpServer) Start() error {
 	} else {
 		err = http.ListenAndServe(config.addr, self)
 	}
-	return err
-}
-
-func (self *HttpServer) Close() {
-	self.logger.Close()
+	if err != nil {
+		logging.Error("Listen has an error: %s", err.Error())
+	}
 }
 
 func (self *HttpServer) writeLog(resp *loggedResponseWriter, req *http.Request) {

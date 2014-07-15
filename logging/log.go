@@ -7,9 +7,11 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
 	"runtime"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -51,7 +53,7 @@ var (
 )
 
 type Handler interface {
-	io.WriteCloser
+	io.Writer
 }
 
 type Logger struct {
@@ -82,7 +84,15 @@ func NewLogger(handler Handler, flags int, level int) *Logger {
 	}
 	logger.waitGroup.Add(1)
 	go logger.listen()
+	go logger.onExit()
 	return logger
+}
+
+func (self *Logger) onExit() {
+	c := make(chan os.Signal)
+	signal.Notify(c, syscall.SIGINT, syscall.SIGHUP, syscall.SIGTERM, syscall.SIGTSTP, syscall.SIGQUIT)
+	<-c
+	self.Close()
 }
 
 func (self *Logger) listen() {
@@ -91,8 +101,6 @@ func (self *Logger) listen() {
 		case msg := <-self.mq:
 			self.handler.Write(msg)
 		case <-self.quit:
-			self.handler.Close()
-			self.handler = nil
 			self.waitGroup.Done()
 			return
 		}
@@ -219,30 +227,9 @@ func (self *Logger) Notify(format string, v ...interface{}) error {
 
 // ---------- for std logger -------
 
-var std *Logger
-
-func Std() *Logger {
-	return std
-}
-
-func StdOpen() {
-	if std != nil && !std.isClosed() {
-		return
-	}
-	std = NewLogger(os.Stderr, F_DATE|F_LEVEL, L_INFO)
-}
-
-func StdClose() {
-	if std == nil || std.isClosed() {
-		return
-	}
-	std.Close()
-}
+var std *Logger = NewLogger(os.Stderr, F_DATE|F_LEVEL, L_INFO)
 
 func SetHandler(handler Handler) error {
-	if std == nil {
-		return ErrStdLogNotOpen
-	}
 	std.lock.Lock()
 	std.handler = handler
 	std.lock.Unlock()
@@ -250,16 +237,10 @@ func SetHandler(handler Handler) error {
 }
 
 func SetFlags(flags int) error {
-	if std == nil {
-		return ErrStdLogNotOpen
-	}
 	return std.SetFlags(flags)
 }
 
 func Flags() (int, error) {
-	if std == nil {
-		return 0, ErrStdLogNotOpen
-	}
 	std.lock.Lock()
 	flags := std.flags
 	std.lock.Unlock()
@@ -267,16 +248,10 @@ func Flags() (int, error) {
 }
 
 func SetLevel(l int) error {
-	if std == nil {
-		return ErrStdLogNotOpen
-	}
 	return std.SetLevel(l)
 }
 
 func Level() (int, error) {
-	if std == nil {
-		return 0, ErrStdLogNotOpen
-	}
 	std.lock.Lock()
 	l := std.level
 	std.lock.Unlock()
@@ -284,43 +259,25 @@ func Level() (int, error) {
 }
 
 func Trace(format string, v ...interface{}) error {
-	if std == nil {
-		return ErrStdLogNotOpen
-	}
 	return std.Log(L_TRACE, format, v...)
 }
 
 func Debug(format string, v ...interface{}) error {
-	if std == nil {
-		return ErrStdLogNotOpen
-	}
 	return std.Log(L_DEBUG, format, v...)
 }
 
 func Info(format string, v ...interface{}) error {
-	if std == nil {
-		return ErrStdLogNotOpen
-	}
 	return std.Log(L_INFO, format, v...)
 }
 
 func Warn(format string, v ...interface{}) error {
-	if std == nil {
-		return ErrStdLogNotOpen
-	}
 	return std.Log(L_WARN, format, v...)
 }
 
 func Error(format string, v ...interface{}) error {
-	if std == nil {
-		return ErrStdLogNotOpen
-	}
 	return std.Log(L_ERROR, format, v...)
 }
 
 func Notify(format string, v ...interface{}) error {
-	if std == nil {
-		return ErrStdLogNotOpen
-	}
 	return std.Log(L_NOTIFY, format, v...)
 }

@@ -31,7 +31,7 @@ dawn一个轻量级HTTP框架，基于原生http框架进行了简单的封装�
 		config := web.NewConfig(":80", web.DEFAULT_LOG_FLAG, web.DEFAULT_LOG_LEVEL, false, "", "")
 		server := web.NewServer(config, nil, nil)
 		server.AddHandler("/", TestIndex)
-		server.Start()
+		server.ListenAndServe()
 	}
 dawn提供了三种URI响应方式「固定URI映射(mapping)，前缀优先(prefix)和模板匹配(match)」，其优先级为：`mapping > prefix > match`，如果使用了`match`方法响应，你可以通过`ctx.GetVar`方法得到之前你在URI定义时所写的变量名字，如：`{id: [0-9]+}`将可以通过`ctx.GetVar("id")`得到相应的内容，匹配方式由冒号后的正则表达式所决定。
 
@@ -65,7 +65,7 @@ dawn提供了三种URI响应方式「固定URI映射(mapping)，前缀优先(pre
 		server.AddHandler("article/2345/name/mapping_test", MappingUrlTest)
 		server.AddHandler("~/article/2345/name", PrefixUrlTest)
 		server.AddHandler("^/article/{id :\d+}$/name/{name:[a-z]+}$", RegexpUrlTest)
-		server.Start()
+		server.ListenAndServe()
 	}
 
 dawn还提供了session的支持但这不是必选项，用户可以根据需要来加入session。session的配置需要通过构造一个`web.SessionContext`对象来创建，`web.SessionContext`包涵了session的相关配置信息。其中`driver`参数可以使用我们提供的`web.NewRedisSessionDriver`，如果你需要使用别的存储方式你也可以自己实现一个｀driver｀，只要符合以下接口即可：
@@ -112,7 +112,7 @@ dawn还提供了session的支持但这不是必选项，用户可以根据需要
 		config := web.NewConfig(":80", web.DEFAULT_LOG_FLAG, web.DEFAULT_LOG_LEVEL, false, "", "")
 		server := web.NewServer(config, sessionCtx, nil)
 		server.AddHandler("/counter", TestSession)
-		server.Start()
+		server.ListenAndServe()
 	}
 > 注意：如果没有给`web.HttpServer`配置`web.SessionContext`参数，以上操作均会抛出异常`web.ErrSessionNotSetup`，使用`session`前请确保配置是否正确，以免带来不必要的问题。
 

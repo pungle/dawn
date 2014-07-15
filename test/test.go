@@ -7,9 +7,7 @@ import (
 	"github.com/pungle/dawn/logging"
 	"github.com/pungle/dawn/web"
 	"os"
-	"os/signal"
 	"runtime"
-	"syscall"
 	"time"
 )
 
@@ -89,7 +87,6 @@ func main() {
 	)
 
 	//errfile, _ := os.OpenFile("/data/logs/error.log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
-	logging.StdOpen()
 	//logging.SetHandler(errfile)
 	logging.SetFlags(logging.F_DATE | logging.F_LEVEL | logging.F_SHORT_FILE)
 	logging.SetLevel(logging.L_ERROR)
@@ -106,19 +103,8 @@ func main() {
 	server.AddHandler("^/test/{id :[0-9]+}$/article/{name: [a-zA-Z]+}$/page/{age: [0-9]{2}}$/", RegexpUrlTest)
 
 	msgChans = make(map[string]chan string)
-
-	go server.Start()
-	waitForExit(server)
-}
-
-func waitForExit(server *web.HttpServer) {
-	// 参考: http://en.wikipedia.org/wiki/Unix_signal
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, syscall.SIGINT, syscall.SIGHUP, syscall.SIGTERM, syscall.SIGTSTP, syscall.SIGQUIT)
-	println("waiting...")
-	s := <-c
-	println("Got signal: ", s.String())
-	logging.Std().Close()
-	server.Close()
+	server.ListenAndServe()
+	handler.Flush()
+	f.Close()
 	println("Terminated")
 }

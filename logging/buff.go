@@ -17,7 +17,7 @@ type BufferHandler struct {
 	lock sync.Mutex
 }
 
-func NewBuffHandler(handler Handler, capacity int) Handler {
+func NewBuffHandler(handler Handler, capacity int) *BufferHandler {
 	return &BufferHandler{
 		handler:  handler,
 		buffer:   make([]byte, 0, capacity),
@@ -40,9 +40,8 @@ func (self *BufferHandler) Write(msg []byte) (cnt int, err error) {
 	return
 }
 
-func (self *BufferHandler) Close() error {
+func (self *BufferHandler) Flush() {
 	self.lock.Lock()
 	self.handler.Write(self.buffer)
 	self.lock.Unlock()
-	return self.handler.Close()
 }
